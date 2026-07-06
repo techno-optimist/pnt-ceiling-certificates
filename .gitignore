@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Solve-stage scratch (markers/dumps written by the solve/harvest drivers)
+CRASH
+CRASH_restricted
+DONE_K*
+FAILED_K*
+basis_K*.txt

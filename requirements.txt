@@ -1,0 +1,18 @@
+# The certified verification path -- `make verify`, i.e.
+# scripts/recompute_bound.py + scripts/log_audit.py -- needs ONLY numpy and
+# mpmath on top of the Python >= 3.12 standard library (int / fractions.Fraction
+# exact arithmetic + mpmath.iv interval enclosures). No network, no GPU.
+#
+# Pinned versions of the certified path (also emitted by `make versions`):
+#   Python 3.12.3, mpmath 1.3.0, numpy 2.4.4
+# (verified to reproduce identically under newer point releases, e.g. numpy 2.3.x).
+
+numpy>=1.24        # integer dual load / residual accumulation; figure data
+mpmath>=1.3        # mpmath.iv interval enclosures of ln(k) on the certified path
+matplotlib>=3.7    # make_figure.py only (display figure; no certified content)
+
+# NOTE: highspy 1.14.0 (HiGHS) is required ONLY by the separate LP-solve stage
+# (scripts/solve_ladder.py, refine_*.py, rehearse_polish.py) that PRODUCED the
+# archived duals. It is NOT needed to verify the theorems from the shipped files
+# and is deliberately omitted here so `make verify` runs with a minimal install.
+#   highspy>=1.14   # LP solve stage only; NOT on the certified path

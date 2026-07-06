@@ -1,0 +1,86 @@
+======================================================================
+STEP 0: integrity / hash of the dual file
+======================================================================
+recomputed y_hash: b13f05d298a4d3a1b3d0d07704fc64b5392bbe7cdd95e11cfb66f71e96bf6907
+certificate hash : b13f05d298a4d3a1b3d0d07704fc64b5392bbe7cdd95e11cfb66f71e96bf6907
+HASH MATCH: True
+
+======================================================================
+STEP (d): scoping vs verifier semantics
+======================================================================
+K (max key)          = 4800
+M (domain=10*maxkey) = 48000   10*K=48000  match=True
+TOL                  = 1.0001  ==1.0001: True
+box                  = [-10, 10]
+n rows in dual       = 4800
+n columns k (2..K)   = 4799  (cert says 4799)
+
+======================================================================
+STEP (b): 20 random y_m >= 0, rows in [1,M], Y/D == stored y
+======================================================================
+min Y = 1  (all Y>=0: True)
+min m = 1  max m = 47982  in [1,48000]: True
+max Y = 139493329151007  maxY*(K-1) = 669428486595682593  < 2^63 = True
+20-sample y check: 20/20 pass
+
+======================================================================
+STEP (a): 20 random k, EXACT r_k via pure Fraction (independent path)
+======================================================================
+certificate max|r| claim = 2.336799e-11
+  k=     65  |r_k|<= 1.9763e-11
+  k=    360  |r_k|<= 7.8079e-12
+  k=    572  |r_k|<= 2.1922e-11
+  k=    789  |r_k|<= 2.0556e-11
+  k=    883  |r_k|<= 7.8350e-12
+  k=    987  |r_k|<= 2.0728e-12
+  k=   2054  |r_k|<= 4.0478e-12
+  k=   2573  |r_k|<= 7.5213e-12
+  k=   2806  |r_k|<= 1.6693e-11
+  k=   3098  |r_k|<= 1.9233e-12
+  k=   3130  |r_k|<= 4.8074e-13
+  k=   3277  |r_k|<= 1.7464e-11
+  k=   3519  |r_k|<= 8.2458e-12
+  k=   3598  |r_k|<= 5.5204e-12
+  k=   3798  |r_k|<= 2.2433e-11
+  k=   3932  |r_k|<= 1.8478e-11
+  k=   4117  |r_k|<= 1.3471e-11
+  k=   4160  |r_k|<= 1.2383e-11
+  k=   4314  |r_k|<= 8.6043e-12
+  k=   4621  |r_k|<= 1.8272e-12
+worst spot-checked |r_k| = 2.2433e-11  <= claimed max: True
+
+======================================================================
+STEP (c): FULL independent residual pass -> sum|r|, recompute B
+======================================================================
+full pass done in 1.2s
+independent sum|r| float = 5.44249548e-08   cert = 5.44249548e-08
+independent max|r| float = 2.336799e-11    cert = 2.336799e-11
+
+sum_y exact = 280424712112762/281474976710656
+cert sum_y  = 280424712112762/281474976710656  MATCH: True
+
+term1 (TOL*sum_y) upper = 0.99636833746776174863
+term2 (10*sum|r|) upper = 5.4424952e-7
+B upper (independent)   = 0.996368881717282874432504
+B cert decimal          = 0.9963688817172828744325041
+independent B <= cert decimal? True
+
+======================================================================
+STEP (e): primal <= B
+======================================================================
+B = 0.9963688817172828
+primal LP       = 0.9963683211217781  B>=primal: True  gap=5.606e-07
+primal feasible = 0.9963682137701979  B>=primal: True  gap=6.679e-07
+
+======================================================================
+VERDICT INPUTS
+======================================================================
+  hash_match = True
+  y_rows_ok = True
+  scoping = True
+  sumy_match = True
+  spot_ok = True
+  B_within_claim = True
+  primal_le_B = True
+
+SKEPTIC_VERDICT_ALL_PASS = True

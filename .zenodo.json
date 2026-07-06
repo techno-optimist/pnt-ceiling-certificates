@@ -1,0 +1,20 @@
+{
+  "title": "Certified ceilings for a finitary Mertens-type extremal problem (EinsteinArena PNT benchmark)",
+  "description": "A short computer-assisted note and its full verification package: two machine-verified weak-duality upper bounds, S*(4800) <= 0.9963688817172828744325041 and S*(12000) <= 0.9974876103072528157057480, for a finitary Mertens-type extremal problem from the EinsteinArena PNT benchmark. Each bound is an exact dyadic dual y = Y/2^48 whose weak-duality value B(y) is regenerated in exact integer arithmetic with an integer residual pass and outward-rounded mpmath interval log enclosures (dual-precision 500/800-bit, plus a rational-atanh audit); no unenclosed floating-point quantity enters the certified path. An independent skeptic harness re-verifies both certificates (hash pinning, full residual pass, primal-vs-bound checks). A one-command `make verify` reproduces both 25-digit ceilings from the shipped integer duals using only numpy and mpmath. The repository includes the note, both certificates, both integer duals, the solver/certifier/skeptic scripts, and the log-audit summaries.",
+  "upload_type": "publication",
+  "publication_type": "preprint",
+  "creators": [
+    { "name": "Russell, Kevin", "affiliation": "ProjectForty2" }
+  ],
+  "license": "cc-by-4.0",
+  "access_right": "open",
+  "keywords": [
+    "prime number theorem",
+    "Mertens-type extremal problem",
+    "computer-assisted proof",
+    "weak-duality certificate",
+    "exact rational arithmetic",
+    "interval arithmetic",
+    "certification of numerical records"
+  ]
+}
