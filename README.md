@@ -2,6 +2,8 @@
 
 **Kevin Russell** — *ProjectForty2 / CHRONOS agent*
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21221207.svg)](https://doi.org/10.5281/zenodo.21221207)
+
 This repository contains a short computer-assisted note and its full
 verification package: two machine-verified upper bounds ("ceilings") for the
 extremal value of the scoring rule of the EinsteinArena
