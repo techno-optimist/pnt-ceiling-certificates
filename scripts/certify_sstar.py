@@ -36,6 +36,11 @@ import numpy as np
 from fractions import Fraction
 from mpmath import mp, iv
 
+# Cross-reach monotonicity of S*(K) is measured in all solves; not proven; not
+# used in the certificate. This verbatim string is the only monotonicity claim
+# emitted to the machine-readable artifacts.
+MONOTONE_NOTE = "Measured in all solves; not proven; not used in the certificate."
+
 NPZ = sys.argv[1] if len(sys.argv) > 1 else "y_polish1e-09_K4800.npz"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "certificate.json"
 
@@ -50,7 +55,11 @@ denom_pow = int(d["denom_pow"])
 K = int(d["K"]); M = int(d["M"]); TOL = float(d["TOL"])
 D = 1 << denom_pow  # 2^denom_pow, exact
 
-assert M == 10 * K, f"M ({M}) must equal 10*K ({10*K})"
+assert M == 10 * K, f"npz M ({M}) must equal 10*K ({10*K}) (verifier upper_bound)"
+# The verifier samples x in [1, 10K), so floor(x) <= 10K-1: the integer
+# constraint index m ranges over [1, 10K-1]. M_dom is that constraint-domain
+# upper; the npz M field stores the verifier's sampling upper_bound (10K).
+M_dom = 10 * K - 1
 assert TOL == 1.0001
 
 # ---- (1) y -> exact dyadic; clip negatives to 0 (preserves cert validity) ---
@@ -59,8 +68,8 @@ if neg:
     print(f"[clip] {neg} negative Y clipped to 0")
     Y_arr = np.where(Y_arr < 0, 0, Y_arr)
 assert (Y_arr >= 0).all()
-# rows must lie in [1, M]
-assert m_arr.min() >= 1 and m_arr.max() <= M, (int(m_arr.min()), int(m_arr.max()), M)
+# rows must lie in the constraint domain [1, 10K-1]
+assert m_arr.min() >= 1 and m_arr.max() <= M_dom, (int(m_arr.min()), int(m_arr.max()), M_dom)
 # max product safety check (empirical, matches the analytic bound)
 maxYval = int(Y_arr.max())
 assert maxYval * (K - 1) < (1 << 63), "int64 overflow risk in per-term product"
@@ -155,14 +164,15 @@ B_f = float(B_upper)
 print("\n=== CERTIFIED BOUND ===")
 print(f"B (certified upper, float)   = {B_f:.16g}")
 print(f"B decimal (25 digits, up)    = {B_decimal_25}")
-print(f"term1 = TOL*sum_y (upper)    = {float(term1_upper):.16g}")
-print(f"10*sum|r| (upper)            = {float(iv.mpf(10)*sum_r_iv).b if False else float(term2_iv.b):.6e}")
+print(f"term1 = TOL*sum_y (nearest)  = {float(term1_upper):.16g}")
+print(f"10*sum|r| (certified upper)  = {float(iv.mpf(10)*sum_r_iv).b if False else float(term2_iv.b):.6e}")
 print(f"sum|r| (certified upper)     = {float(sum_r_upper):.6e}")
 print(f"\nSanity vs K=4800 program primal:")
 print(f"  B >= LP primal(4800)  {B_f} >= {PRIMAL_K4800_LP}: {B_f >= PRIMAL_K4800_LP}  gap={B_f-PRIMAL_K4800_LP:.3e}")
 print(f"  B >= feas primal(4800) {B_f} >= {PRIMAL_K4800_FEAS}: {B_f >= PRIMAL_K4800_FEAS}  gap={B_f-PRIMAL_K4800_FEAS:.3e}")
 print(f"\nScope check vs K=48000 board (this bound does NOT cover K=48000):")
-print(f"  B(4800) vs leader(48000) {B_f} vs {LEADER_K48000}: B<leader = {B_f < LEADER_K48000} (EXPECTED, S* increasing in K)")
+print(f"  B(4800) vs leader(48000) {B_f} vs {LEADER_K48000}: B<leader = {B_f < LEADER_K48000} "
+      f"(consistent: the leader uses keys up to 48000)")
 
 # ---- hash of the dual weights ----------------------------------------------
 h = hashlib.sha256()
@@ -173,15 +183,18 @@ y_hash = h.hexdigest()
 cert = {
     "problem": "EinsteinArena PNT board (id 7) — CEILING theorem, weak-duality certificate",
     "scope_K": K,
-    "scope_M": M,
+    "scope_M": M_dom,                     # constraint-domain upper: m in [1, 10K-1]
     "TOL": TOL,
     "box": [-10, 10],
     "bound_statement": f"S*({K}) <= {B_decimal_25}",
     "B_upper_decimal_25_roundup": B_decimal_25,
-    "B_upper_float": repr(B_f),
-    "term1_TOL_times_sum_y_upper_float": repr(float(term1_upper)),
+    # B_nearest_float / term1_..._nearest_float print the NEAREST float of a
+    # two-sided quantity, NOT a one-sided certified bound; only the fields named
+    # "..._certified_upper..." (and the exact-rational vault) are one-sided.
+    "B_nearest_float": repr(B_f),
+    "term1_TOL_times_sum_y_nearest_float": repr(float(term1_upper)),
     "sum_abs_r_certified_upper_float": repr(float(sum_r_upper)),
-    "ten_times_sum_abs_r_upper_float": repr(float(term2_iv.b)),
+    "ten_times_sum_abs_r_certified_upper_float": repr(float(term2_iv.b)),
     "sum_y_exact_fraction": [S_Y, D],
     "sum_y_float": repr(float(sum_y_exact)),
     "denom_pow": denom_pow,
@@ -204,15 +217,17 @@ cert = {
         "duality_gap_vs_feasible": B_f - PRIMAL_K4800_FEAS,
     },
     "scope_ledger": {
-        "certifies": f"S*({K}) for the FULL integer-constraint program (all m in [1,{M}], "
+        "certifies": f"S*({K}) for the FULL integer-constraint program (all m in [1,{M_dom}], "
                      f"TOL=1.0001, keys 2..{K}, boxes [-10,10], verifier f(1) adjustment).",
-        "does_NOT_certify": "S*(48000) (the live board reach). S*(K) is nondecreasing in K, "
-                            "so this K=4800 ceiling does NOT upper-bound S*(48000); the "
-                            "K=48000 production dual solve had not converged at certify time "
-                            "(round 1 of dual simplex, no valid K=48000 dual checkpoint yet).",
+        "does_NOT_certify": "S*(48000) (the live board reach). This K=4800 ceiling does NOT "
+                            "upper-bound S*(48000): zero-extending its dual to the reach-48000 "
+                            "column set is valid but vacuous. The K=48000 production dual solve "
+                            "had not converged at certify time (round 1 of dual simplex, no valid "
+                            "K=48000 dual checkpoint yet).",
         "leader_K48000": LEADER_K48000,
         "chronos_K48000": CHRONOS_K48000,
-        "note": "B(4800) < leader(48000) is EXPECTED and consistent (leader uses keys up to 48000).",
+        "monotone_note": MONOTONE_NOTE,
+        "note": "B(4800) < leader(48000) is consistent (the leader uses keys up to 48000).",
     },
 }
 with open(OUT, "w") as f:

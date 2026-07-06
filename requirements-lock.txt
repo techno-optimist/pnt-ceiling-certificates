@@ -1,0 +1,25 @@
+# requirements-lock.txt -- EXACT pins for the certified verification path.
+#
+# These are the versions under which the certified arithmetic and its
+# independent re-verification (`make verify`, i.e. scripts/recompute_bound.py +
+# scripts/log_audit.py) were run and pinned. Only Python + numpy + mpmath touch
+# the certified bound path; both are exact-arithmetic (int / fractions.Fraction /
+# mpmath.iv interval) computations, so the results are reproducible bit-for-bit
+# under these pins.
+#
+#   Python (CPython) 3.12.3   -- int / fractions.Fraction exact arithmetic
+#   mpmath           1.3.0    -- mpmath.iv interval enclosures of ln(k)
+#   numpy            2.4.4    -- integer dual load / residual accumulation
+#
+# (The bounds also reproduce identically under newer point releases, e.g. this
+# archive re-verifies clean under numpy 2.3.x and CPython 3.14.x; the pins below
+# record the reference environment, not a hard floor.)
+mpmath==1.3.0
+numpy==2.4.4
+
+# --- solve stage only (NOT needed to verify the theorems) ---------------------
+# highspy/HiGHS is required ONLY by the separate LP-solve stage that PRODUCED the
+# archived duals (scripts/solve_ladder.py, refine_*.py, rehearse_polish.py). It
+# is NOT on the certified path and is NOT needed by `make verify`. Recorded here
+# for completeness of the production environment:
+#   highspy==1.14.0

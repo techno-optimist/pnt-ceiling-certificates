@@ -25,7 +25,11 @@ import numpy as np
 from fractions import Fraction
 from mpmath import mp, iv
 
-BANKED_S4800 = "0.9963688817172828744325041"  # monotone floor: S*(K)>=S*(4800), K>4800
+# Cross-reach monotonicity of S*(K) is measured in all solves; not proven; not
+# used in the certificate. This string is the ONLY monotonicity claim emitted to
+# the machine-readable artifacts (verbatim, so a reader cannot mistake it for a
+# proven lemma).
+MONOTONE_NOTE = "Measured in all solves; not proven; not used in the certificate."
 
 ap = argparse.ArgumentParser()
 ap.add_argument("npz")
@@ -45,7 +49,11 @@ denom_pow = int(d["denom_pow"])
 K = int(d["K"]); M = int(d["M"]); TOL = float(d["TOL"])
 D = 1 << denom_pow
 
-assert M == 10 * K, f"M ({M}) must equal 10*K ({10*K})"
+# The verifier samples x in [1, 10K), so floor(x) <= 10K-1: the integer
+# constraint index m ranges over [1, 10K-1]. The npz field M stores the
+# verifier's sampling upper_bound (10K); the constraint-domain upper is M_dom.
+assert M == 10 * K, f"npz M ({M}) must equal 10*K ({10*K}) (verifier upper_bound)"
+M_dom = 10 * K - 1                       # true constraint-domain upper (m <= 10K-1)
 assert TOL == 1.0001
 
 # ---- (1) y -> exact dyadic; clip negatives to 0 (preserves cert validity) ---
@@ -54,7 +62,7 @@ if neg:
     print(f"[clip] {neg} negative Y clipped to 0")
     Y_arr = np.where(Y_arr < 0, 0, Y_arr)
 assert (Y_arr >= 0).all()
-assert m_arr.min() >= 1 and m_arr.max() <= M, (int(m_arr.min()), int(m_arr.max()), M)
+assert m_arr.min() >= 1 and m_arr.max() <= M_dom, (int(m_arr.min()), int(m_arr.max()), M_dom)
 maxYval = int(Y_arr.max())
 assert maxYval * (K - 1) < (1 << 63), "int64 overflow risk in per-term product"
 
@@ -127,8 +135,9 @@ if args.report:
     except Exception as e:
         print(f"[warn] could not read report {args.report}: {e}")
 
-monotone_floor = float(mp.mpf(BANKED_S4800))
-sane_floor = B_f > monotone_floor          # S*(K) >= S*(4800), K>4800
+# Sanity gates (no cross-reach monotonicity is invoked): B must be a positive
+# bound strictly under the trivial box ceiling and dominate both measured primals.
+sane_positive = B_f > 0.0
 sane_ceiling = B_f < args.ceiling_sanity
 sane_ge_lp = (primal_lp is None) or (B_f >= primal_lp)
 sane_ge_feas = (primal_feas is None) or (B_f >= primal_feas)
@@ -136,18 +145,18 @@ sane_ge_feas = (primal_feas is None) or (B_f >= primal_feas)
 print("\n=== CERTIFIED BOUND ===")
 print(f"B (certified upper, float)   = {B_f:.16g}")
 print(f"B decimal (25 digits, up)    = {B_decimal_25}")
-print(f"term1 = TOL*sum_y (upper)    = {float(term1_upper):.16g}")
-print(f"10*sum|r| (upper)            = {float(term2_iv.b):.6e}")
+print(f"term1 = TOL*sum_y (nearest)  = {float(term1_upper):.16g}")
+print(f"10*sum|r| (certified upper)  = {float(term2_iv.b):.6e}")
 print(f"sum|r| (certified upper)     = {float(sum_r_upper):.6e}")
 print("\n=== SANITY ===")
-print(f"B > S*(4800)={monotone_floor:.16g} (monotone)  : {sane_floor}")
+print(f"B > 0                          : {sane_positive}")
 print(f"B < ceiling_sanity={args.ceiling_sanity}        : {sane_ceiling}")
 if primal_lp is not None:
     print(f"B >= LP primal({K})={primal_lp:.16g}  : {sane_ge_lp}  gap={B_f-primal_lp:.3e}")
 if primal_feas is not None:
     print(f"B >= feas primal({K})={primal_feas:.16g}: {sane_ge_feas}  gap={B_f-primal_feas:.3e}")
 
-all_sane = sane_floor and sane_ceiling and sane_ge_lp and sane_ge_feas
+all_sane = sane_positive and sane_ceiling and sane_ge_lp and sane_ge_feas
 
 # ---- hash of the dual weights ----------------------------------------------
 h = hashlib.sha256()
@@ -158,15 +167,18 @@ y_hash = h.hexdigest()
 cert = {
     "problem": "EinsteinArena PNT board (id 7) — CEILING theorem, weak-duality certificate",
     "scope_K": K,
-    "scope_M": M,
+    "scope_M": M_dom,                     # constraint-domain upper: m in [1, 10K-1]
     "TOL": TOL,
     "box": [-10, 10],
     "bound_statement": f"S*({K}) <= {B_decimal_25}",
     "B_upper_decimal_25_roundup": B_decimal_25,
-    "B_upper_float": repr(B_f),
-    "term1_TOL_times_sum_y_upper_float": repr(float(term1_upper)),
+    # B_nearest_float / term1_..._nearest_float print the NEAREST float of a
+    # two-sided quantity, NOT a one-sided certified bound; only the fields named
+    # "..._certified_upper..." (and the exact-rational vault) are one-sided.
+    "B_nearest_float": repr(B_f),
+    "term1_TOL_times_sum_y_nearest_float": repr(float(term1_upper)),
     "sum_abs_r_certified_upper_float": repr(float(sum_r_upper)),
-    "ten_times_sum_abs_r_upper_float": repr(float(term2_iv.b)),
+    "ten_times_sum_abs_r_certified_upper_float": repr(float(term2_iv.b)),
     "sum_y_exact_fraction": [S_Y, D],
     "sum_y_float": repr(float(sum_y_exact)),
     "denom_pow": denom_pow,
@@ -181,10 +193,9 @@ cert = {
         "max_abs_r_float": max_abs_r_float,
     },
     "sanity": {
-        "monotone_floor_S4800": BANKED_S4800,
-        "B_gt_S4800_monotone": bool(sane_floor),
         "ceiling_sanity": args.ceiling_sanity,
         "B_lt_ceiling": bool(sane_ceiling),
+        "B_positive": bool(sane_positive),
         "primal_LP": primal_lp,
         "primal_feasible": primal_feas,
         "B_ge_primal_LP": bool(sane_ge_lp),
@@ -192,10 +203,9 @@ cert = {
         "all_sane": bool(all_sane),
     },
     "scope_ledger": {
-        "certifies": f"S*({K}) for the FULL integer-constraint program (all m in [1,{M}], "
+        "certifies": f"S*({K}) for the FULL integer-constraint program (all m in [1,{M_dom}], "
                      f"TOL=1.0001, keys 2..{K}, boxes [-10,10], verifier f(1) adjustment).",
-        "monotone_note": f"S*(K) nondecreasing in K, so S*({K}) >= S*(4800)="
-                         f"{BANKED_S4800}; this certified upper bound exceeds that floor.",
+        "monotone_note": MONOTONE_NOTE,
     },
 }
 with open(args.out, "w") as f:

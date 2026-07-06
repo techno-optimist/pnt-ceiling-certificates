@@ -1,7 +1,15 @@
 #!/usr/bin/env python
-"""Build the alpha-rescaled 2000-key submission vector from a y_final npz and run
-the REAL arena verifier on it. Reports exact score + pass/fail vs the 1.0001 cap
-and the gate. Optionally writes the submission json.
+"""MEASUREMENT (NON-CERTIFIED): platform-verifier end-to-end run.
+
+This is an illustrative MEASUREMENT script, NOT part of the certified proof and
+NOT on the `make verify` path. It requires the external EinsteinArena client
+module `arena.arena_client` (the competition platform's client), which is NOT
+shipped in this repository; the script therefore does not run from the archive
+alone. It builds the alpha-rescaled 2000-key submission vector from a y_final
+npz and runs the platform's REAL verifier on it, reporting the exact score and
+pass/fail versus the 1.0001 cap and the gate. Nothing here enters any certified
+bound; the certified path is scripts/recompute_bound.py + scripts/log_audit.py
+(numpy + mpmath only). See the note's measurement ledger.
 
 usage: verify_sub.py <y_final.npz> [out.json] [extra_safety=1.0]
 """

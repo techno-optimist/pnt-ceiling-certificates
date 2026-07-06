@@ -211,6 +211,22 @@ reach 4800  : b13f05d298a4d3a1b3d0d07704fc64b5392bbe7cdd95e11cfb66f71e96bf6907
 reach 12000 : 2089d81dde22f590ef27e4aeaa4ead55932a8138250d3d05d2299d12647baffd
 ```
 
+## Cite this work / permanent archive
+
+This bundle is deposited on Zenodo as a citable archive:
+
+- **Concept DOI** (cites *all* versions):
+  [10.5281/zenodo.21221207](https://doi.org/10.5281/zenodo.21221207)
+- **This-version DOI** (release tag `v1.1`):
+  [10.5281/zenodo.21221208](https://doi.org/10.5281/zenodo.21221208)
+- **Development history:**
+  [github.com/techno-optimist/pnt-ceiling-certificates](https://github.com/techno-optimist/pnt-ceiling-certificates)
+
+The Zenodo version record **is** the pinned archive — it carries a per-file MD5
+checksum for every deposited file, so there is no need for (and we do not embed)
+a self-referential git commit hash. In addition, the two integer duals are
+pinned by the SHA-256 hashes listed above, independent of the archive location.
+
 ## License
 
 Code and certificate data are released under the MIT License (see `LICENSE`).

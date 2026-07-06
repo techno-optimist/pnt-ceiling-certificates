@@ -1,7 +1,7 @@
 {
  "problem": "EinsteinArena PNT board (id 7) \u2014 CEILING theorem, weak-duality certificate",
  "scope_K": 4800,
- "scope_M": 48000,
+ "scope_M": 47999,
  "TOL": 1.0001,
  "box": [
   -10,
@@ -9,10 +9,10 @@
  ],
  "bound_statement": "S*(4800) <= 0.9963688817172828744325041",
  "B_upper_decimal_25_roundup": "0.9963688817172828744325041",
- "B_upper_float": "0.9963688817172828",
- "term1_TOL_times_sum_y_upper_float": "0.9963683374677617",
+ "B_nearest_float": "0.9963688817172828",
+ "term1_TOL_times_sum_y_nearest_float": "0.9963683374677617",
  "sum_abs_r_certified_upper_float": "5.442495211258054e-08",
- "ten_times_sum_abs_r_upper_float": "5.442495211258054e-07",
+ "ten_times_sum_abs_r_certified_upper_float": "5.442495211258054e-07",
  "sum_y_exact_fraction": [
   280424712112762,
   281474976710656
@@ -23,7 +23,7 @@
  "n_negative_Y_clipped": 0,
  "n_columns_k": 4799,
  "y_hash_sha256": "b13f05d298a4d3a1b3d0d07704fc64b5392bbe7cdd95e11cfb66f71e96bf6907",
- "y_source_npz": "certified_dual_K4800.npz",
+ "y_source_npz": "duals/certified_dual_K4800.npz",
  "mp_prec_bits": 400,
  "diagnostics_float": {
   "sum_abs_r_float": 5.442495483084994e-08,
@@ -38,10 +38,11 @@
   "duality_gap_vs_feasible": 6.679470848647284e-07
  },
  "scope_ledger": {
-  "certifies": "S*(4800) for the FULL integer-constraint program (all m in [1,48000], TOL=1.0001, keys 2..4800, boxes [-10,10], verifier f(1) adjustment).",
-  "does_NOT_certify": "S*(48000) (the live board reach). S*(K) is nondecreasing in K, so this K=4800 ceiling does NOT upper-bound S*(48000); the K=48000 production dual solve had not converged at certify time (round 1 of dual simplex, no valid K=48000 dual checkpoint yet).",
+  "certifies": "S*(4800) for the FULL integer-constraint program (all m in [1,47999], TOL=1.0001, keys 2..4800, boxes [-10,10], verifier f(1) adjustment).",
+  "does_NOT_certify": "S*(48000) (the live board reach). This K=4800 ceiling does NOT upper-bound S*(48000): zero-extending its dual to the reach-48000 column set is valid but vacuous. The K=48000 production dual solve had not converged at certify time (round 1 of dual simplex, no valid K=48000 dual checkpoint yet).",
   "leader_K48000": 0.9973457049300725,
   "chronos_K48000": 0.99651773,
-  "note": "B(4800) < leader(48000) is EXPECTED and consistent (leader uses keys up to 48000)."
+  "monotone_note": "Measured in all solves; not proven; not used in the certificate.",
+  "note": "B(4800) < leader(48000) is consistent (the leader uses keys up to 48000)."
  }
 }
